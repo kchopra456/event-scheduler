@@ -16,14 +16,25 @@ import logging
 class Scheduler:
 
     def __init__(self, app: Flask, polling_interval: int = 1, polling_threshold: int = 300):
+        """
+
+        Parameters
+        ----------
+        app: Flask
+            Flask app to attach the scheduler service.
+        polling_interval: int
+            time interval in seconds to trigger polling at.
+        polling_threshold
+            buffer time in seconds to stop polling for event before the trigger.
+        """
         self.__log = logging.getLogger(name='event-scheduler')
         self._scheduler = APScheduler()
         self._polling = APScheduler()
         self.__polling_interval = polling_interval
         self.__polling_threshold = polling_threshold
-        self.start(app)
+        self._initialize(app)
 
-    def start(self, app):
+    def _initialize(self, app):
         self._scheduler.init_app(app)
         self._polling.init_app(app)
         self._scheduler.start()
@@ -82,6 +93,18 @@ class Scheduler:
             self._scheduler.modify_job(id=id, trigger='date', run_date=poll_run_time)
 
     def add_job(self, id: str,  trigger_func: Callable, trigger_at: Callable):
+        """
+        Method call to add a event job to scheduler.
+        Parameters
+        ----------
+        id: str
+            Identifier to uniquely recognize the added job.
+        trigger_func: Callback
+            Callback to execute when the scheduled event is triggered.
+        trigger_at: Callback
+            Callback to retrieve the schedule time(datetime), must take <id> as parameter.
+
+        """
         if self._scheduler.get_job(id):
             raise ValueError('<id> already taken, please provide unique id.')
 
